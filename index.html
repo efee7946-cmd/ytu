@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YTÜ Time - En İyi Tweet</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-slate-900 text-white font-sans min-h-screen flex flex-col items-center">
+
+  <header class="w-full bg-slate-800 border-b border-slate-700 py-4 md:py-6 mb-4">
+    <div class="flex items-center justify-between max-w-4xl mx-auto px-4">
+      <a href="home.html" onclick="return confirmExit(event)" class="text-slate-400 hover:text-yellow-400 transition text-sm">← Ana Sayfa</a>
+      <h1 class="text-2xl md:text-3xl font-bold text-yellow-400">🏆 YTÜ TIME</h1>
+      <div class="w-16 md:w-20"></div>
+    </div>
+  </header>
+
+  <p id="round-name" class="text-slate-400 mt-2 text-sm md:text-base">Son 16</p>
+  <p class="text-white mt-1 text-xs md:text-sm">👆 Beğendiğin tweete tıkla!</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 max-w-4xl w-full mx-auto mt-4 md:mt-6 px-4">
+    <div id="cardA" class="cursor-pointer hover:scale-105 active:scale-95 hover:border-yellow-400 border-4 border-transparent rounded-xl transition select-none">
+      <img id="imgA" class="rounded-xl w-full">
+    </div>
+    <div id="cardB" class="cursor-pointer hover:scale-105 active:scale-95 hover:border-yellow-400 border-4 border-transparent rounded-xl transition select-none">
+      <img id="imgB" class="rounded-xl w-full">
+    </div>
+  </div>
+
+  <p id="status" class="text-slate-400 mt-4 text-sm mb-10"></p>
+
+  <script src="js/exit.js"></script>
+  <script type="module" src="js/app.js"></script>
+
+  <!-- Çıkış Uyarısı Modal -->
+  <div id="exitModal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 px-4">
+    <div class="bg-slate-800 border-4 border-yellow-400 rounded-2xl p-8 max-w-sm w-full text-center">
+      <p class="text-2xl mb-2">⚠️</p>
+      <h2 class="text-xl font-bold text-white mb-2">Emin misin?</h2>
+      <p class="text-slate-400 text-sm mb-6">Oyun yarıda kalacak ve ilerleme kaybolacak.</p>
+      <div class="flex gap-4">
+        <button onclick="closeModal()" class="flex-1 py-3 rounded-xl border-2 border-slate-500 text-slate-300 hover:border-yellow-400 hover:text-yellow-400 transition font-bold">
+          Devam Et
+        </button>
+        <button onclick="goHome()" class="flex-1 py-3 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-900 transition font-bold">
+          Çık
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="stars" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+<script>
+  const canvas = document.getElementById("stars");
+  const ctx = canvas.getContext("2d");
+  let W, H, bgStars = [], shooters = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    bgStars = [];
+    for (let i = 0; i < 120; i++) {
+      bgStars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.2 + 0.3,
+        alpha: Math.random() * 0.5 + 0.2,
+        twinkleSpeed: Math.random() * 0.015 + 0.005,
+        twinkleDir: Math.random() > 0.5 ? 1 : -1
+      });
+    }
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, W, H);
+
+    for (let s of bgStars) {
+      s.alpha += s.twinkleSpeed * s.twinkleDir;
+      if (s.alpha > 0.75) { s.alpha = 0.75; s.twinkleDir = -1; }
+      if (s.alpha < 0.1)  { s.alpha = 0.1;  s.twinkleDir =  1; }
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200,210,255,${s.alpha})`;
+      ctx.fill();
+    }
+
+    for (let i = shooters.length - 1; i >= 0; i--) {
+      const s = shooters[i];
+      const speed = Math.sqrt(s.vx * s.vx + s.vy * s.vy);
+      const tailX = s.x - s.vx * (s.len / speed);
+      const tailY = s.y - s.vy * (s.len / speed);
+      const grad = ctx.createLinearGradient(tailX, tailY, s.x, s.y);
+      grad.addColorStop(0, `rgba(255,255,255,0)`);
+      grad.addColorStop(1, `rgba(255,255,255,${s.alpha * 0.8})`);
+      ctx.beginPath();
+      ctx.moveTo(tailX, tailY);
+      ctx.lineTo(s.x, s.y);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${s.alpha})`;
+      ctx.fill();
+      s.x += s.vx; s.y += s.vy; s.alpha -= s.fade;
+      if (s.alpha <= 0 || s.x > W + 100 || s.y > H + 100) shooters.splice(i, 1);
+    }
+
+    if (Math.random() < 0.011) {
+      const angle = (Math.random() * 20 + 10) * Math.PI / 180;
+      const speed = Math.random() * 4 + 3;
+      shooters.push({
+        x: Math.random() * W * 0.7,
+        y: Math.random() * H * 0.4,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        len: Math.random() * 80 + 60,
+        alpha: 1,
+        fade: Math.random() * 0.012 + 0.008
+      });
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  resize();
+  animate();
+  window.addEventListener("resize", resize);
+</script>
+</body>
+
+</html>

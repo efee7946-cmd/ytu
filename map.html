@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YTÜ Davutpaşa Kampüsü Haritası</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bebas+Neue&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#0a1628;--navy2:#0e1f3d;--navy3:#162845;
+      --gold:#c9962a;--gold2:#f0bf5a;--gold3:#ffd97d;
+      --text:#e8ecf4;--muted:#8899bb;
+    }
+    html,body{height:100%}
+    body{background:var(--navy);color:var(--text);font-family:"Nunito",sans-serif;min-height:100vh;overflow-x:hidden}
+    body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+      background:radial-gradient(1px 1px at 8% 12%,rgba(255,255,255,.5) 0%,transparent 0%),
+        radial-gradient(1.5px 1.5px at 28% 6%,rgba(249,197,66,.6) 0%,transparent 0%),
+        radial-gradient(1px 1px at 75% 18%,rgba(255,255,255,.4) 0%,transparent 0%),
+        radial-gradient(1px 1px at 55% 82%,rgba(255,255,255,.3) 0%,transparent 0%),
+        radial-gradient(1.5px 1.5px at 92% 55%,rgba(249,197,66,.5) 0%,transparent 0%)}
+
+    nav{position:sticky;top:0;z-index:200;background:rgba(10,22,40,.94);backdrop-filter:blur(16px);
+      border-bottom:2px solid rgba(201,150,42,.3);padding:0 20px;height:60px;
+      display:flex;align-items:center;justify-content:space-between}
+    .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-title{font-family:"Bebas Neue",sans-serif;font-size:1.4rem;letter-spacing:.08em;
+      background:linear-gradient(135deg,var(--gold2),var(--gold3));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .nav-links{display:flex;gap:4px;list-style:none}
+    .nav-links a{text-decoration:none;color:var(--muted);font-size:.82rem;font-weight:700;
+      padding:6px 12px;border-radius:8px;border:1.5px solid transparent;transition:all .2s;
+      display:flex;align-items:center;gap:5px}
+    .nav-links a:hover{color:var(--text);background:var(--navy3);border-color:rgba(201,150,42,.3)}
+    .nav-links a.active{color:var(--gold2);border-color:rgba(201,150,42,.4);background:rgba(201,150,42,.08)}
+
+    .page{position:relative;z-index:1;padding-bottom:60px}
+    .page-header{padding:24px 24px 12px;text-align:center}
+    .page-header h1{font-family:"Bebas Neue",sans-serif;font-size:clamp(1.8rem,4vw,2.8rem);
+      letter-spacing:.07em;background:linear-gradient(135deg,#fff 30%,var(--gold2));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+    .page-header p{color:var(--muted);font-size:.9rem;font-weight:600}
+
+    .map-layout{display:flex;gap:0;max-width:1200px;margin:0 auto;padding:0 16px;align-items:stretch}
+    .zone-sidebar{width:280px;flex-shrink:0;background:var(--navy2);border-radius:20px;border:2px solid rgba(201,150,42,.25);
+      padding:16px;max-height:75vh;overflow-y:auto}
+    .zone-sidebar-title{font-family:"Bebas Neue",sans-serif;font-size:1rem;letter-spacing:.1em;color:var(--gold2);
+      margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .zone-cat{margin-bottom:18px}
+    .zone-cat:last-child{margin-bottom:0}
+    .zone-cat-name{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+      margin-bottom:8px;padding-left:4px}
+    .zone-btn{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;margin-bottom:6px;
+      background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.08);border-radius:12px;
+      color:var(--text);font-family:"Nunito",sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;
+      transition:all .2s;text-align:left}
+    .zone-btn:hover{background:rgba(201,150,42,.12);border-color:rgba(201,150,42,.35);color:var(--gold2)}
+    .zone-btn .z-icon{font-size:1.25rem;flex-shrink:0}
+    .zone-btn .z-name{flex:1;min-width:0}
+    .zone-btn .z-badge{font-size:.7rem;font-family:"JetBrains Mono",monospace;color:var(--gold2);
+      background:rgba(201,150,42,.2);padding:2px 6px;border-radius:6px;flex-shrink:0}
+    .zone-btn.hidden{display:none}
+
+    .filter-bar{display:flex;flex-wrap:wrap;gap:6px;max-width:1020px;margin:0 auto;padding:8px 16px 14px}
+    .filter-btn{background:var(--navy2);border:1.5px solid rgba(255,255,255,.1);border-radius:999px;
+      padding:5px 14px;font-size:.78rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .2s}
+    .filter-btn:hover{color:var(--text);border-color:rgba(201,150,42,.3)}
+    .filter-btn.active{background:rgba(201,150,42,.12);color:var(--gold2);border-color:rgba(201,150,42,.4)}
+
+    .map-container{flex:1;min-width:0}
+    .map-svg-wrap{background:linear-gradient(160deg,#1a3a1a,#0f280f);
+      border-radius:24px;border:2px solid rgba(201,150,42,.3);
+      box-shadow:0 24px 60px rgba(0,0,0,.6);overflow:hidden}
+    .campus-map-img{width:100%;display:block;vertical-align:top}
+    .legend{display:flex;flex-wrap:wrap;gap:8px;max-width:1200px;margin:12px auto 0;padding:0 16px}
+    .legend-item{display:flex;align-items:center;gap:6px;background:var(--navy2);
+      border:1.5px solid rgba(255,255,255,.08);border-radius:999px;padding:4px 12px;
+      font-size:.75rem;font-weight:700;color:var(--muted)}
+    .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+    /* Modal */
+    .modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.8);
+      backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;
+      padding:16px;opacity:0;pointer-events:none;transition:opacity .3s}
+    .modal-overlay.open{opacity:1;pointer-events:all}
+    .modal{background:var(--navy2);border:2px solid rgba(201,150,42,.3);border-radius:20px;
+      width:100%;max-width:680px;max-height:90vh;overflow-y:auto;
+      transform:translateY(20px) scale(.97);transition:transform .3s cubic-bezier(.34,1.3,.64,1);
+      box-shadow:0 24px 60px rgba(0,0,0,.6)}
+    .modal-overlay.open .modal{transform:translateY(0) scale(1)}
+    .modal-header{padding:18px 22px 14px;border-bottom:1px solid rgba(255,255,255,.07);
+      display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .modal-info{display:flex;align-items:center;gap:12px}
+    .modal-icon{font-size:2rem}
+    .modal-info h2{font-family:"Bebas Neue",sans-serif;font-size:1.4rem;letter-spacing:.06em;
+      background:linear-gradient(135deg,#fff,var(--gold2));-webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;background-clip:text}
+    .modal-info p{color:var(--muted);font-size:.78rem;font-weight:600}
+    .modal-close{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.07);
+      border:1.5px solid rgba(255,255,255,.12);color:var(--muted);font-size:1rem;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+    .modal-close:hover{background:rgba(255,255,255,.14);color:var(--text)}
+    .modal-body{padding:18px 22px}
+
+    .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:18px}
+    .photo-item{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:4/3;
+      background:var(--navy3);border:1.5px solid rgba(255,255,255,.08);cursor:pointer;transition:all .2s}
+    .photo-item:hover{transform:scale(1.04);border-color:var(--gold2)}
+    .photo-item img{width:100%;height:100%;object-fit:cover;display:block}
+    .photo-author{position:absolute;bottom:0;left:0;right:0;
+      background:linear-gradient(to top,rgba(0,0,0,.8),transparent);
+      padding:8px 7px 5px;font-size:.6rem;color:rgba(255,255,255,.7);font-family:"JetBrains Mono",monospace}
+    .no-photos{text-align:center;padding:28px 16px;color:var(--muted);
+      background:rgba(255,255,255,.03);border-radius:10px;border:1.5px dashed rgba(255,255,255,.1);margin-bottom:16px}
+    .no-photos .emoji{font-size:1.8rem;margin-bottom:6px;display:block}
+
+    .upload-section{background:rgba(201,150,42,.06);border:1.5px solid rgba(201,150,42,.25);border-radius:12px;padding:16px}
+    .upload-section h3{font-size:.88rem;font-weight:800;color:var(--gold2);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+    .form-group{display:flex;flex-direction:column;gap:3px}
+    .form-group label{font-size:.68rem;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+    .form-input{background:var(--navy);border:1.5px solid rgba(255,255,255,.1);border-radius:7px;
+      padding:7px 11px;color:var(--text);font-family:"Nunito",sans-serif;font-size:.83rem;outline:none;transition:border-color .2s}
+    .form-input:focus{border-color:var(--gold2)}
+    .drop-zone{border:2px dashed rgba(201,150,42,.35);border-radius:10px;padding:20px;
+      text-align:center;cursor:pointer;transition:all .2s;margin-top:8px;background:rgba(10,22,40,.5)}
+    .drop-zone:hover,.drop-zone.drag-over{border-color:var(--gold2);background:rgba(201,150,42,.05)}
+    .drop-zone .dz-icon{font-size:1.6rem;margin-bottom:6px;display:block}
+    .drop-zone p{font-size:.8rem;color:var(--muted);font-weight:600}
+    .drop-zone span{color:var(--gold2)}
+    #fileInput{display:none}
+    .preview-strip{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+    .preview-thumb{width:65px;height:48px;border-radius:7px;object-fit:cover;border:2px solid var(--gold2)}
+    .btn-upload{width:100%;margin-top:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));
+      color:var(--navy);font-family:"Nunito",sans-serif;font-weight:900;font-size:.88rem;
+      padding:11px;border-radius:999px;border:none;cursor:pointer;transition:all .2s;
+      box-shadow:0 4px 20px rgba(201,150,42,.3);display:flex;align-items:center;justify-content:center;gap:7px}
+    .btn-upload:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(201,150,42,.5)}
+    .btn-upload:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .upload-msg{margin-top:8px;text-align:center;font-size:.78rem;font-weight:700;border-radius:7px;padding:7px;display:none}
+    .upload-msg.success{background:rgba(58,170,85,.15);color:#3aaa55;display:block}
+    .upload-msg.error{background:rgba(232,88,88,.15);color:#e85858;display:block}
+
+    .lightbox{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.93);
+      display:flex;align-items:center;justify-content:center;padding:20px;
+      opacity:0;pointer-events:none;transition:opacity .3s}
+    .lightbox.open{opacity:1;pointer-events:all}
+    .lightbox img{max-width:100%;max-height:90vh;border-radius:12px;border:2px solid rgba(201,150,42,.4);
+      transform:scale(.92);transition:transform .3s cubic-bezier(.34,1.2,.64,1)}
+    .lightbox.open img{transform:scale(1)}
+    .lb-close{position:absolute;top:20px;right:20px;width:38px;height:38px;border-radius:50%;
+      background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);
+      color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+      background:var(--navy2);border:1.5px solid rgba(201,150,42,.4);border-radius:10px;
+      padding:11px 18px;font-size:.83rem;font-weight:700;color:var(--text);
+      box-shadow:0 8px 30px rgba(0,0,0,.5);z-index:3000;
+      transition:transform .35s cubic-bezier(.34,1.3,.64,1);white-space:nowrap}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+
+    @media(max-width:900px){
+      .map-layout{flex-direction:column}
+      .zone-sidebar{width:100%;max-height:320px}
+    }
+    @media(max-width:640px){
+      .form-row{grid-template-columns:1fr}
+      .modal{max-height:95vh;border-radius:16px 16px 0 0}
+      .modal-overlay{align-items:flex-end;padding:0}
+      .nav-links{display:none}
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="home.html" class="nav-brand">
+    <span style="font-size:1.5rem">⭐</span>
+    <span class="nav-title">YILDIZ SEÇİYOR</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="home.html">🏠 Ana Sayfa</a></li>
+    <li><a href="index.html">🗳️ Oylama</a></li>
+    <li><a href="map.html" class="active">🗺️ Harita</a></li>
+    <li><a href="leaderboard.html">🏆 Sıralama</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <h1>🗺️ DAVUTPAŞA KAMPÜSÜ</h1>
+    <p>Soldan bölge seç — fotoğrafları gör, kendi fotoğrafını yükle! 📸</p>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">✨ Tümü</button>
+    <button class="filter-btn" data-filter="faculty">🎓 Fakülteler</button>
+    <button class="filter-btn" data-filter="social">🌿 Sosyal</button>
+    <button class="filter-btn" data-filter="service">🔧 Hizmetler</button>
+    <button class="filter-btn" data-filter="gate">🚪 Girişler</button>
+  </div>
+
+  <div class="map-layout">
+    <aside class="zone-sidebar">
+      <div class="zone-sidebar-title">📍 Bölgeler</div>
+      <div id="zoneSidebarList"></div>
+    </aside>
+    <div class="map-container">
+      <div class="map-svg-wrap">
+        <img src="campus-map.png" alt="YTÜ Davutpaşa Kampüsü Haritası" class="campus-map-img">
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#5060aa"></div>Fakülte</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2a9a2a"></div>Sosyal Alan</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c9962a"></div>Hizmet</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#cc2222"></div>Giriş</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2a5a8a"></div>Teknopark</div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-info">
+        <span class="modal-icon" id="mIcon">🏛️</span>
+        <div>
+          <h2 id="mTitle">Bölge</h2>
+          <p>YTÜ Davutpaşa Kampüsü</p>
+        </div>
+      </div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="photo-grid" id="photoGrid"></div>
+      <div class="upload-section">
+        <h3>📸 Fotoğraf Yükle</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Adın (opsiyonel)</label>
+            <input class="form-input" id="uploaderName" placeholder="Öğrenci adı..." maxlength="30">
+          </div>
+          <div class="form-group">
+            <label>Açıklama (opsiyonel)</label>
+            <input class="form-input" id="uploaderDesc" placeholder="Kısa açıklama..." maxlength="60">
+          </div>
+        </div>
+        <div class="drop-zone" id="dropZone">
+          <span class="dz-icon">🖼️</span>
+          <p>Fotoğrafı buraya sürükle veya <span id="dzSpan">seç</span></p>
+          <p style="font-size:.68rem;margin-top:3px;opacity:.7">JPG, PNG — maks. 5 MB</p>
+        </div>
+        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple>
+        <div class="preview-strip" id="previewStrip"></div>
+        <button class="btn-upload" id="btnUpload" disabled>📤 Yükle — Admin Onayını Bekle</button>
+        <div class="upload-msg" id="uploadMsg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose">✕</button>
+  <img id="lbImg" src="" alt="">
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, query, where, getDocs, orderBy }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+const FB={
+  apiKey:"AIzaSyABb9qD1kBcCCNZF6y-izEI49eml5laQsk",
+  authDomain:"ytut-fc618.firebaseapp.com",projectId:"ytut-fc618",
+  storageBucket:"ytut-fc618.firebasestorage.app",
+  messagingSenderId:"379744876322",appId:"1:379744876322:web:73a1396302b9bed6a6977b"
+};
+const fbApp=initializeApp(FB);
+const db=getFirestore(fbApp);
+const storage=getStorage(fbApp);
+
+const ZONES={
+  "gate-a":    {name:"A Girişi",                 icon:"🚪",cat:"gate"},
+  "gate-b":    {name:"B Girişi",                  icon:"🚪",cat:"gate"},
+  "egitim":    {name:"Eğitim Fakültesi",           icon:"🎓",cat:"faculty"},
+  "elektrik":  {name:"Elektrik-Elektronik Fak.",   icon:"⚡",cat:"faculty"},
+  "fen":       {name:"Fen-Edebiyat Fakültesi",     icon:"🔬",cat:"faculty"},
+  "iktisat":   {name:"İktisat ve İdari Bil. Fak.", icon:"📊",cat:"faculty"},
+  "kimya":     {name:"Kimya-Metalurji Fak.",       icon:"🧪",cat:"faculty"},
+  "sanat":     {name:"Sanat ve Tasarım Fak.",      icon:"🎨",cat:"faculty"},
+  "insaat":    {name:"İnşaat Fakültesi",           icon:"🏗️",cat:"faculty"},
+  "uygulamali":{name:"Uygulamalı Bil. Fak.",       icon:"💡",cat:"faculty"},
+  "yemekhane": {name:"Yemekhane",                  icon:"🍽️",cat:"service"},
+  "kutuphane": {name:"Kütüphane",                  icon:"📚",cat:"service"},
+  "rektorluk": {name:"Rektörlük",                  icon:"🏛️",cat:"service"},
+  "merkez-lab":{name:"Merkez Lab",                 icon:"🔬",cat:"service"},
+  "ydyo":      {name:"Yabancı Diller Y.O.",        icon:"🌐",cat:"service"},
+  "kongre":    {name:"Kongre Merkezi",             icon:"🎤",cat:"service"},
+  "teknopark": {name:"YTÜ Yıldız Teknopark",       icon:"🚀",cat:"service"},
+  "kulupler":  {name:"Kulüpler Vadisi",            icon:"⚽",cat:"social"},
+  "orta-bahce":{name:"Orta Bahçe",                icon:"🌿",cat:"social"},
+  "spor":      {name:"Spor Sahası",               icon:"⚽",cat:"social"},
+};
+
+let activeZone=null, pendingFiles=[], activeFilter="all";
+const zoneCounts={};
+
+// ── Build sidebar from ZONES
+const CAT_ORDER=["gate","faculty","service","social"];
+const CAT_LABELS={gate:"Girişler",faculty:"Fakülteler",service:"Hizmetler",social:"Sosyal Alanlar"};
+
+function renderSidebar(){
+  const list=document.getElementById("zoneSidebarList");
+  list.innerHTML="";
+  CAT_ORDER.forEach(cat=>{
+    const zonesInCat=Object.entries(ZONES).filter(([id,z])=>z.cat===cat);
+    if(zonesInCat.length===0) return;
+    const div=document.createElement("div");
+    div.className="zone-cat";
+    div.innerHTML=`<div class="zone-cat-name">${CAT_LABELS[cat]}</div>`;
+    zonesInCat.forEach(([id,zone])=>{
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.className="zone-btn";
+      btn.dataset.id=id;
+      btn.dataset.cat=cat;
+      btn.innerHTML=`<span class="z-icon">${zone.icon}</span><span class="z-name">${zone.name}</span><span class="z-badge" data-id="${id}" style="display:none"></span>`;
+      btn.addEventListener("click",()=>openZone(id,zone));
+      div.appendChild(btn);
+    });
+    list.appendChild(div);
+  });
+}
+
+function applyFilter(){
+  document.querySelectorAll(".zone-btn").forEach(btn=>{
+    const show=activeFilter==="all"||btn.dataset.cat===activeFilter;
+    btn.classList.toggle("hidden",!show);
+  });
+}
+
+// ── Filter (sidebar + filter bar)
+document.querySelectorAll(".filter-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".filter-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    activeFilter=btn.dataset.filter;
+    applyFilter();
+  });
+});
+
+// ── Load photo counts (show on sidebar buttons)
+async function loadCounts(){
+  for(const id of Object.keys(ZONES)){
+    try{
+      const snap=await getDocs(query(collection(db,"mapPhotos"),
+        where("zoneId","==",id),where("approved","==",true)));
+      zoneCounts[id]=snap.size;
+      const badge=document.querySelector(`.zone-btn .z-badge[data-id="${id}"]`);
+      if(badge){
+        if(snap.size>0){ badge.textContent="📸 "+snap.size; badge.style.display="inline-block"; }
+        else badge.style.display="none";
+      }
+    }catch(e){}
+  }
+}
+
+// ── Open zone modal
+async function openZone(id,zone){
+  activeZone={id,...zone};
+  document.getElementById("mIcon").textContent=zone.icon;
+  document.getElementById("mTitle").textContent=zone.name;
+  clearForm();
+  const grid=document.getElementById("photoGrid");
+  grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--muted)">
+    <div style="font-size:1.4rem;margin-bottom:6px">⏳</div>Yükleniyor...</div>`;
+  document.getElementById("modalOverlay").classList.add("open");
+  try{
+    const snap=await getDocs(query(collection(db,"mapPhotos"),
+      where("zoneId","==",id),where("approved","==",true),orderBy("createdAt","desc")));
+    grid.innerHTML="";
+    if(snap.empty){
+      grid.innerHTML=`<div class="no-photos" style="grid-column:1/-1">
+        <span class="emoji">📸</span>
+        <strong style="color:var(--text);display:block;margin-bottom:4px">Henüz fotoğraf yok!</strong>
+        <span style="font-size:.78rem">Bu bölge için ilk fotoğrafı sen yükle.</span></div>`;
+    } else {
+      snap.docs.forEach(d=>{
+        const p={id:d.id,...d.data()};
+        const item=document.createElement("div");
+        item.className="photo-item";
+        item.innerHTML=`<img src="${p.url}" alt="" loading="lazy">
+          <div class="photo-author">${p.uploader||"Anonim"}</div>`;
+        item.addEventListener("click",()=>{
+          document.getElementById("lbImg").src=p.url;
+          document.getElementById("lightbox").classList.add("open");
+        });
+        grid.appendChild(item);
+      });
+    }
+  }catch(e){
+    grid.innerHTML=`<div class="no-photos" style="grid-column:1/-1"><span class="emoji">❌</span>Hata oluştu.</div>`;
+  }
+}
+
+document.getElementById("modalClose").addEventListener("click",()=>{
+  document.getElementById("modalOverlay").classList.remove("open"); activeZone=null;
+});
+document.getElementById("modalOverlay").addEventListener("click",e=>{
+  if(e.target===document.getElementById("modalOverlay")){
+    document.getElementById("modalOverlay").classList.remove("open"); activeZone=null;
+  }
+});
+
+// ── File upload
+const dropZone=document.getElementById("dropZone");
+const fileInput=document.getElementById("fileInput");
+document.getElementById("dzSpan").addEventListener("click",e=>{e.stopPropagation();fileInput.click()});
+dropZone.addEventListener("click",()=>fileInput.click());
+dropZone.addEventListener("dragover",e=>{e.preventDefault();dropZone.classList.add("drag-over")});
+dropZone.addEventListener("dragleave",()=>dropZone.classList.remove("drag-over"));
+dropZone.addEventListener("drop",e=>{e.preventDefault();dropZone.classList.remove("drag-over");handleFiles([...e.dataTransfer.files])});
+fileInput.addEventListener("change",()=>handleFiles([...fileInput.files]));
+
+function handleFiles(files){
+  const valid=files.filter(f=>f.type.startsWith("image/")&&f.size<=5*1024*1024);
+  if(valid.length<files.length) showToast("⚠️ Bazı dosyalar 5MB sınırını aştı.");
+  pendingFiles=valid.slice(0,5);
+  const strip=document.getElementById("previewStrip");
+  strip.innerHTML="";
+  pendingFiles.forEach(f=>{
+    const img=document.createElement("img");
+    img.className="preview-thumb"; img.src=URL.createObjectURL(f); strip.appendChild(img);
+  });
+  document.getElementById("btnUpload").disabled=pendingFiles.length===0;
+}
+
+document.getElementById("btnUpload").addEventListener("click",async()=>{
+  if(!activeZone||!pendingFiles.length) return;
+  const btn=document.getElementById("btnUpload");
+  const msg=document.getElementById("uploadMsg");
+  const name=document.getElementById("uploaderName").value.trim()||"Anonim";
+  const desc=document.getElementById("uploaderDesc").value.trim();
+  btn.disabled=true; btn.textContent="⏳ Yükleniyor..."; msg.className="upload-msg";
+  try{
+    for(const file of pendingFiles){
+      const ext=file.name.split(".").pop();
+      const path=`mapPhotos/${activeZone.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const ref=sRef(storage,path);
+      await uploadBytes(ref,file);
+      const url=await getDownloadURL(ref);
+      await addDoc(collection(db,"mapPhotos"),{
+        zoneId:activeZone.id,zoneName:activeZone.name,
+        url,uploader:name,desc,approved:false,createdAt:new Date()
+      });
+    }
+    msg.textContent="✅ Gönderildi! Admin onayından sonra haritada görünecek.";
+    msg.className="upload-msg success"; clearForm();
+    showToast("📬 Fotoğrafın admin onayına gönderildi!");
+    loadCounts();
+  }catch(e){
+    msg.textContent="❌ Hata: "+(e.message||"Bilinmeyen");
+    msg.className="upload-msg error";
+    btn.disabled=false; btn.innerHTML="📤 Yükle — Admin Onayını Bekle";
+  }
+});
+
+function clearForm(){
+  pendingFiles=[]; fileInput.value="";
+  document.getElementById("uploaderName").value="";
+  document.getElementById("uploaderDesc").value="";
+  document.getElementById("previewStrip").innerHTML="";
+  document.getElementById("btnUpload").disabled=true;
+  document.getElementById("btnUpload").innerHTML="📤 Yükle — Admin Onayını Bekle";
+  document.getElementById("uploadMsg").className="upload-msg";
+}
+
+document.getElementById("lbClose").addEventListener("click",()=>document.getElementById("lightbox").classList.remove("open"));
+document.getElementById("lightbox").addEventListener("click",e=>{
+  if(e.target===document.getElementById("lightbox"))document.getElementById("lightbox").classList.remove("open");
+});
+
+function showToast(msg){
+  const t=document.getElementById("toast"); t.textContent=msg;
+  t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),3500);
+}
+
+renderSidebar();
+applyFilter();
+loadCounts();
+</script>
+</body>
+</html>
