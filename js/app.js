@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, increment }
+import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, addDoc, collection }
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -36,6 +36,16 @@ function shuffle(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+// Oturum ID — her ziyaretçi için benzersiz ama anonim
+function getSessionId() {
+  let sid = sessionStorage.getItem("ytutSession");
+  if (!sid) {
+    sid = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    sessionStorage.setItem("ytutSession", sid);
+  }
+  return sid;
 }
 
 const params = new URLSearchParams(window.location.search);
@@ -110,8 +120,19 @@ async function nextRound() {
     const hasVoted = localStorage.getItem("ytutHasVoted");
     if (!hasVoted) {
       try {
+        // Toplam sayacı güncelle
         const globalRef = doc(db, "globalVotes", "totals");
         await updateDoc(globalRef, { [toKey(champion)]: increment(1) });
+
+        // Detaylı log kaydet
+        await addDoc(collection(db, "voteLog"), {
+          champion: toKey(champion),
+          championUrl: toUrl(champion),
+          tournamentSize: count,
+          sessionId: getSessionId(),
+          timestamp: new Date()
+        });
+
         localStorage.setItem("ytutHasVoted", "true");
       } catch(e) {
         console.error("Şampiyon kaydedilemedi:", e);
