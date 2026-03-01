@@ -273,8 +273,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, query, where, getDocs, orderBy }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getStorage, ref as sRef, uploadBytes }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
 
 const FB={
   apiKey:"AIzaSyABb9qD1kBcCCNZF6y-izEI49eml5laQsk",
@@ -284,7 +283,9 @@ const FB={
 };
 const fbApp=initializeApp(FB);
 const db=getFirestore(fbApp);
-const storage=getStorage(fbApp);
+
+const CLOUDINARY_CLOUD="dh6iwicnc";
+const CLOUDINARY_PRESET="ytu_map";
 
 const ZONES={
   "gate-a":    {name:"A Girişi",                 icon:"🚪",cat:"gate"},
@@ -450,23 +451,26 @@ document.getElementById("btnUpload").addEventListener("click",async()=>{
   const desc=document.getElementById("uploaderDesc").value.trim();
   btn.disabled=true; msg.className="upload-msg"; msg.textContent="";
 
-  const BUCKET="ytut-fc618.firebasestorage.app";
-
   try{
     for(let i=0;i<pendingFiles.length;i++){
       btn.textContent=`⏳ Yükleniyor (${i+1}/${pendingFiles.length})...`;
       const file=pendingFiles[i];
-      const ext=file.name.split(".").pop();
-      const fileName=`${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const storagePath=`mapPhotos/${activeZone.id}/${fileName}`;
-      const ref=sRef(storage,storagePath);
 
-      await uploadBytes(ref,file);
+      // Cloudinary'e yükle
+      const formData=new FormData();
+      formData.append("file",file);
+      formData.append("upload_preset",CLOUDINARY_PRESET);
+      formData.append("folder",`ytu_map/${activeZone.id}`);
 
-      // getDownloadURL yerine direkt URL oluştur (daha hızlı)
-      const encodedPath=encodeURIComponent(storagePath);
-      const url=`https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodedPath}?alt=media`;
+      const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`,{
+        method:"POST",
+        body:formData
+      });
+      if(!res.ok) throw new Error("Cloudinary yükleme hatası: "+res.status);
+      const data=await res.json();
+      const url=data.secure_url;
 
+      // Firestore'a kaydet
       await addDoc(collection(db,"mapPhotos"),{
         zoneId:activeZone.id,
         zoneName:activeZone.name,
@@ -483,7 +487,7 @@ document.getElementById("btnUpload").addEventListener("click",async()=>{
     showToast("📬 Fotoğrafın admin onayına gönderildi!");
     loadCounts();
   }catch(e){
-    const errMsg=e.code||e.message||"Bilinmeyen hata";
+    const errMsg=e.message||"Bilinmeyen hata";
     msg.textContent="❌ Hata: "+errMsg;
     msg.className="upload-msg error";
     console.error("Upload error:",e);
