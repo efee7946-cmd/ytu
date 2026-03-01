@@ -189,7 +189,7 @@
 <div class="page">
   <div class="page-header">
     <h1>🗺️ DAVUTPAŞA KAMPÜSÜ</h1>
-    <p>Soldan bölge seç — fotoğrafları gör, kendi fotoğrafını yükle! 📸</p>
+    <p> Bölge seç — fotoğrafları gör, kendi fotoğrafını yükle! 📸</p>
   </div>
 
   <div class="filter-bar">
@@ -431,8 +431,8 @@ dropZone.addEventListener("drop",e=>{e.preventDefault();dropZone.classList.remov
 fileInput.addEventListener("change",()=>handleFiles([...fileInput.files]));
 
 function handleFiles(files){
-  const valid=files.filter(f=>f.type.startsWith("image/")&&f.size<=5*1024*1024);
-  if(valid.length<files.length) showToast("⚠️ Bazı dosyalar 5MB sınırını aştı.");
+  const valid=files.filter(f=>f.type.startsWith("image/")&&f.size<=10*1024*1024);
+  if(valid.length<files.length) showToast("⚠️ Bazı dosyalar 10MB sınırını aştı.");
   pendingFiles=valid.slice(0,5);
   const strip=document.getElementById("previewStrip");
   strip.innerHTML="";
