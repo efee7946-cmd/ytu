@@ -271,7 +271,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, query, where, getDocs, orderBy }
+import { getFirestore, collection, addDoc, query, where, getDocs }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -385,7 +385,7 @@ async function openZone(id,zone){
   document.getElementById("modalOverlay").classList.add("open");
   try{
     const snap=await getDocs(query(collection(db,"mapPhotos"),
-      where("zoneId","==",id),where("approved","==",true),orderBy("createdAt","desc")));
+      where("zoneId","==",id),where("approved","==",true)));
     grid.innerHTML="";
     if(snap.empty){
       grid.innerHTML=`<div class="no-photos" style="grid-column:1/-1">
