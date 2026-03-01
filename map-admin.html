@@ -185,8 +185,7 @@ const FB={
 const fbApp=initializeApp(FB);
 const db=getFirestore(fbApp);
 
-// Şifre SHA-256 ile hashlenmiş; kaynak kodda düz metin görünmez.
-// Yeni şifre için: Node'da require('crypto').createHash('sha256').update('yeniŞifre').digest('hex')
+ 
 const ADMIN_HASH="7b3c3094924db7b01c19559c98161c2bae5fdf8d2215268b3972dd5767203107";
 
 let currentTab="pending", allPhotos=[];
