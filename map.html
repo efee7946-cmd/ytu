@@ -273,7 +273,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc, query, where, getDocs, orderBy }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getStorage, ref as sRef, uploadBytes, getDownloadURL }
+import { getStorage, ref as sRef, uploadBytes }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const FB={
@@ -448,27 +448,48 @@ document.getElementById("btnUpload").addEventListener("click",async()=>{
   const msg=document.getElementById("uploadMsg");
   const name=document.getElementById("uploaderName").value.trim()||"Anonim";
   const desc=document.getElementById("uploaderDesc").value.trim();
-  btn.disabled=true; btn.textContent="⏳ Yükleniyor..."; msg.className="upload-msg";
+  btn.disabled=true; msg.className="upload-msg"; msg.textContent="";
+
+  const BUCKET="ytut-fc618.firebasestorage.app";
+
   try{
-    for(const file of pendingFiles){
+    for(let i=0;i<pendingFiles.length;i++){
+      btn.textContent=`⏳ Yükleniyor (${i+1}/${pendingFiles.length})...`;
+      const file=pendingFiles[i];
       const ext=file.name.split(".").pop();
-      const path=`mapPhotos/${activeZone.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const ref=sRef(storage,path);
+      const fileName=`${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const storagePath=`mapPhotos/${activeZone.id}/${fileName}`;
+      const ref=sRef(storage,storagePath);
+
       await uploadBytes(ref,file);
-      const url=await getDownloadURL(ref);
+
+      // getDownloadURL yerine direkt URL oluştur (daha hızlı)
+      const encodedPath=encodeURIComponent(storagePath);
+      const url=`https://firebasestorage.googleapis.com/v0/b/${BUCKET}/o/${encodedPath}?alt=media`;
+
       await addDoc(collection(db,"mapPhotos"),{
-        zoneId:activeZone.id,zoneName:activeZone.name,
-        url,uploader:name,desc,approved:false,createdAt:new Date()
+        zoneId:activeZone.id,
+        zoneName:activeZone.name,
+        url,
+        uploader:name,
+        desc,
+        approved:false,
+        createdAt:new Date()
       });
     }
     msg.textContent="✅ Gönderildi! Admin onayından sonra haritada görünecek.";
-    msg.className="upload-msg success"; clearForm();
+    msg.className="upload-msg success";
+    clearForm();
     showToast("📬 Fotoğrafın admin onayına gönderildi!");
     loadCounts();
   }catch(e){
-    msg.textContent="❌ Hata: "+(e.message||"Bilinmeyen");
+    const errMsg=e.code||e.message||"Bilinmeyen hata";
+    msg.textContent="❌ Hata: "+errMsg;
     msg.className="upload-msg error";
-    btn.disabled=false; btn.innerHTML="📤 Yükle — Admin Onayını Bekle";
+    console.error("Upload error:",e);
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML="📤 Yükle — Admin Onayını Bekle";
   }
 });
 
