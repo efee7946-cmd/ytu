@@ -5,15 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YTÜ Time</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    :root{--navy:#0a1628;--navy2:#0e1f3d;--gold:#c9962a;--gold2:#f0bf5a;--gold3:#ffd97d;--muted:#8899bb;}
+    .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-title{font-family:"Bebas Neue",sans-serif;font-size:1.4rem;letter-spacing:.08em;
+      background:linear-gradient(135deg,#f0bf5a,#ffd97d);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .nav-links{display:flex;gap:4px;list-style:none}
+    .nav-links a{text-decoration:none;color:#8899bb;font-size:.82rem;font-weight:700;
+      padding:6px 12px;border-radius:8px;border:1.5px solid transparent;transition:all .2s;
+      display:flex;align-items:center;gap:5px}
+    .nav-links a:hover{color:#e8ecf4;background:#162845;border-color:rgba(201,150,42,.3)}
+    .nav-links a.active{color:#f0bf5a;border-color:rgba(201,150,42,.4);background:rgba(201,150,42,.08)}
+    @media(max-width:640px){.nav-links{display:none}}
+  </style>
 </head>
 
 <body class="bg-slate-900 text-white font-sans min-h-screen flex flex-col items-center">
 
-  <header class="w-full bg-slate-800 border-b border-slate-700 py-6 mb-8 md:mb-12">
-    <div class="flex items-center justify-between max-w-6xl mx-auto px-4">
-      <h1 class="text-2xl md:text-3xl font-bold text-yellow-400">🏆 YTÜ TIME</h1>
-    </div>
-  </header>
+  <nav style="position:sticky;top:0;z-index:200;background:rgba(10,22,40,.94);backdrop-filter:blur(16px);border-bottom:2px solid rgba(201,150,42,.3);padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:2rem;">
+    <a href="home.html" class="nav-brand">
+      <span style="font-size:1.5rem">⭐</span>
+      <span class="nav-title">YILDIZ SEÇİYOR</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="home.html" class="active">🏠 Ana Sayfa</a></li>
+      <li><a href="index.html">🗳️ Oylama</a></li>
+      <li><a href="map.html">🗺️ Harita</a></li>
+    </ul>
+  </nav>
 
   <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 max-w-5xl w-full px-4 md:px-6">
 

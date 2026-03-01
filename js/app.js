@@ -29,9 +29,6 @@ function toUrl(fileName) { return "img/" + fileName; }
 function toKey(fileName) { return fileName.replace(".", "_"); }
 function fromKey(key) { return key.replace("_", "."); }
 
-let currentMatch = 0;
-let winners = [];
-
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -44,6 +41,8 @@ function shuffle(arr) {
 const params = new URLSearchParams(window.location.search);
 const count = parseInt(params.get("count")) || 16;
 let currentPool = shuffle(fileNames.slice(0, count));
+let currentMatch = 0;
+let winners = [];
 let voting = false;
 
 async function init() {
@@ -108,11 +107,15 @@ function setStatus(msg) {
 async function nextRound() {
   if (winners.length === 1) {
     const champion = winners[0];
-    try {
-      const globalRef = doc(db, "globalVotes", "totals");
-      await updateDoc(globalRef, { [toKey(champion)]: increment(1) });
-    } catch(e) {
-      console.error("Şampiyon kaydedilemedi:", e);
+    const hasVoted = localStorage.getItem("ytutHasVoted");
+    if (!hasVoted) {
+      try {
+        const globalRef = doc(db, "globalVotes", "totals");
+        await updateDoc(globalRef, { [toKey(champion)]: increment(1) });
+        localStorage.setItem("ytutHasVoted", "true");
+      } catch(e) {
+        console.error("Şampiyon kaydedilemedi:", e);
+      }
     }
     showResults();
     return;
@@ -145,39 +148,67 @@ async function showResults() {
   const top3 = sorted.slice(0, 3);
 
   document.body.innerHTML = '';
-  document.body.className = "bg-slate-900 text-white font-sans text-center";
+  document.body.style.cssText = "background:#0f172a;color:white;font-family:sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;text-align:center;";
 
   const title = document.createElement('h1');
-  title.className = "text-4xl mt-16 text-yellow-400 font-bold";
+  title.style.cssText = "font-size:2rem;font-weight:bold;color:#facc15;margin-top:60px;margin-bottom:8px;";
   title.innerText = "🏆 GLOBAL SONUÇ";
   document.body.appendChild(title);
 
   const sub = document.createElement('p');
-  sub.className = "text-slate-400 mt-2 mb-10";
+  sub.style.cssText = "color:#94a3b8;margin-bottom:16px;font-size:0.9rem;";
   sub.innerText = `Toplam ${totalVotes} kişi oyladı`;
   document.body.appendChild(sub);
 
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = "display:flex;gap:12px;margin-bottom:32px;flex-wrap:wrap;justify-content:center;";
+  document.body.appendChild(btnRow);
+
+  const replayBtn = document.createElement('button');
+  replayBtn.style.cssText = "padding:12px 32px;background:#facc15;color:#0f172a;font-weight:bold;font-size:1rem;border-radius:12px;border:none;cursor:pointer;";
+  replayBtn.innerText = "🔄 Tekrar Oyna";
+  replayBtn.onmouseover = () => replayBtn.style.background = "#fde047";
+  replayBtn.onmouseout = () => replayBtn.style.background = "#facc15";
+  replayBtn.onclick = () => window.location.reload();
+  btnRow.appendChild(replayBtn);
+
+  const homeBtn = document.createElement('button');
+  homeBtn.style.cssText = "padding:12px 32px;background:transparent;color:#94a3b8;font-weight:bold;font-size:1rem;border-radius:12px;border:2px solid #475569;cursor:pointer;";
+  homeBtn.innerText = "🏠 Ana Sayfa";
+  homeBtn.onmouseover = () => { homeBtn.style.borderColor = "#facc15"; homeBtn.style.color = "#facc15"; };
+  homeBtn.onmouseout = () => { homeBtn.style.borderColor = "#475569"; homeBtn.style.color = "#94a3b8"; };
+  homeBtn.onclick = () => window.location.href = "home.html";
+  btnRow.appendChild(homeBtn);
+
   const container = document.createElement('div');
-  container.className = "mt-4 space-y-10 pb-20";
+  container.style.cssText = "display:flex;flex-wrap:wrap;justify-content:center;gap:24px;max-width:1024px;width:100%;padding:0 16px 80px;";
   document.body.appendChild(container);
+
+  const borderColors = ["#facc15", "#94a3b8", "#b45309"];
 
   top3.forEach((item, index) => {
     const percent = totalVotes > 0 ? Math.round((item[1] / totalVotes) * 100) : 0;
     const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : "🥉";
 
-    const div = document.createElement('div');
+    const card = document.createElement('div');
+    card.style.cssText = `background:#1e293b;border:4px solid ${borderColors[index]};border-radius:16px;padding:20px;display:flex;flex-direction:column;align-items:center;width:280px;`;
 
     const img = document.createElement('img');
     img.src = toUrl(fromKey(item[0]));
-    img.className = "mx-auto w-72 rounded-xl border-4 border-yellow-400";
-    div.appendChild(img);
+    img.style.cssText = "width:100%;border-radius:12px;margin-bottom:14px;";
+    card.appendChild(img);
 
     const p = document.createElement('p');
-    p.className = "mt-3 text-2xl font-bold text-yellow-400";
-    p.innerText = `${medal} %${percent} (${item[1]} oy)`;
-    div.appendChild(p);
+    p.style.cssText = "font-size:1.5rem;font-weight:bold;color:#facc15;margin:0;";
+    p.innerText = `${medal} %${percent}`;
+    card.appendChild(p);
 
-    container.appendChild(div);
+    const votes = document.createElement('p');
+    votes.style.cssText = "color:#94a3b8;font-size:0.85rem;margin-top:4px;";
+    votes.innerText = `${item[1]} oy`;
+    card.appendChild(votes);
+
+    container.appendChild(card);
   });
 }
 
